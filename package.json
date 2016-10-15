@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "bundle-dev": "./node_modules/.bin/webpack-dev-server -d --hot --inline",
-    "bundle": "./node_modules/.bin/webpack"
+    "bundle": "./node_modules/.bin/webpack",
+    "pack-atlas": "node pack-atlas.js"
   },
   "keywords": [
     "game",
