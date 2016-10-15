@@ -4,8 +4,8 @@ var options = {
     format: 'pixi.js',
     powerOfTwo: true,
     trim: false,
-    name: "tiles.png",
-    path: "dist/assets"
+    name: "tiles",
+    path: "assets"
 };
 
 spritesheet('assets/tiles/*.png', options, function (err) {
