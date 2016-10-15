@@ -13,6 +13,16 @@ var config = {
     chunkFilename: "[name]-[hash].js"
   },
   devtool: 'source-map',
+  resolve: {
+    extensions: [
+      '',
+      '.webpack.js',
+      '.web.js',
+      '.ts',
+      '.tsx',
+      '.js'
+    ]
+  },
   module: {
     loaders: [
       { test: /\.css$/, loader: "style-loader!css-loader" },
