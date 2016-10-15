@@ -1,0 +1,36 @@
+{
+  "name": "shape-gods",
+  "version": "0.0.1",
+  "description": "A game about shapes and gods",
+  "main": "dist/index.js",
+  "scripts": {
+    "bundle-dev": "./node_modules/.bin/webpack-dev-server -d --hot --inline",
+    "bundle": "./node_modules/.bin/webpack"
+  },
+  "keywords": [
+    "game",
+    "pixi.js"
+  ],
+  "author": "SrTobi",
+  "license": "MIT",
+  "dependencies": {
+    "@types/pixi.js": "^3.0.30",
+    "pixi.js": "^4.0.3"
+  },
+  "devDependencies": {
+    "brfs": "^1.4.3",
+    "transform-loader": "^0.2.3",
+    "copy-webpack-plugin": "^3.0.1",
+    "css-loader": "^0.23.1",
+    "file-loader": "^0.9.0",
+    "html-webpack-plugin": "^2.22.0",
+    "source-map-loader": "^0.1.5",
+    "style-loader": "^0.13.1",
+    "ts-loader": "^0.8.2",
+    "imports-loader": "^0.6.5",
+    "typescript": "^2.0.0",
+    "webpack": "^1.13.1",
+    "webpack-dev-server": "^1.14.1",
+    "webpack-split-by-path": "^0.1.0"
+  }
+}
