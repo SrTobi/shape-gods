@@ -1,14 +1,15 @@
-
 import * as PIXI from 'pixi.js';
 import * as Utils from './utils';
 
 
-export interface State {
-    enter(prev: State, renderer: PIXI.SystemRenderer): void;
-    leave(next: State): void;
+export abstract class State {
+    enter(prev: State, renderer: PIXI.SystemRenderer): void {}
+    leave(next: State): void {}
 
-    update(dt: number): State | null;
-    render(dt: number): PIXI.Container | null;
+    resized(renderer: PIXI.SystemRenderer): void {}
+
+    abstract update(dt: number): State | null;
+    abstract render(dt: number): PIXI.Container | null;
 }
 
 export class App {
@@ -37,6 +38,13 @@ export class App {
         this.currentState = nextState;
         if(nextState) {
             nextState.enter(prevState, this.renderer);
+            nextState.resized(this.renderer);
+        }
+    }
+
+    private resized() {
+        if(this.currentState) {
+            this.currentState.resized(this.renderer);
         }
     }
 

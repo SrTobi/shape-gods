@@ -3,13 +3,15 @@ import * as PIXI from 'pixi.js';
 
 
 
-export abstract class LoadState implements State {
+export abstract class LoadState extends State {
 
     private stage: PIXI.Container;
     private text: PIXI.Text;
     private nextState: State;
 
     constructor() {
+        super();
+        
         this.stage = new PIXI.Container();
         this.text = new PIXI.Text("Loading...", {fill: "#ffffff"});
         this.stage.addChild(this.text);
