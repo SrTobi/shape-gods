@@ -59,7 +59,7 @@ export class GameState extends State {
     }
 
     enter(prev: State, renderer: PIXI.SystemRenderer): void {
-        this.world = this.worldGenerator.buildWorld();
+        this.world = this.worldGenerator.buildWorld2();
         this.view.addChild(this.world);
         this.stage.addChild(this.view);
 
