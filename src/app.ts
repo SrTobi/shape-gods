@@ -20,7 +20,7 @@ export class App {
 
     constructor(parent: HTMLElement, private targetFPS: number) {
 
-        this.renderer = PIXI.autoDetectRenderer(800, 600, {backgroundColor: 0x000000});
+        this.renderer = PIXI.autoDetectRenderer(800, 600, {backgroundColor: 0x000000, antialias: true});
         parent.appendChild(this.renderer.view);
     }
 
