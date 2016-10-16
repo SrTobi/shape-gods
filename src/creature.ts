@@ -9,15 +9,17 @@ export class Creature extends Entity {
         super();
 
         let g = this.body;
-        g.lineStyle(0);
+        g.lineStyle(1, 0x000000, 0.7);
         g.beginFill(0x010101);
-        g.drawCircle(0, 0, 0.2);
+        g.drawCircle(0, 0, 3);
 
         
-        g.drawCircle(0.3, 0, 0.05);
-        g.drawCircle(-0.3, 0, 0.05);
+        g.drawCircle(6, 0, 1);
+        g.drawCircle(-6, 0, 1);
 
         g.endFill();
+        this.scale.x = 1/20;
+        this.scale.y = 1/20;
         this.addChild(this.body);
     }
 
