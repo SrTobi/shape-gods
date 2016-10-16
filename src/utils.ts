@@ -15,3 +15,14 @@ export function randIndex<T>(array: T[]): number {
 export function randElement<T>(array: T[]): T {
     return array[Math.floor(Math.random() * array.length)];
 }
+
+export function shuffle<T>(array: T[]): T[] {
+    for (let i = array.length; i > 0; i--) {
+        let j = Math.floor(Math.random() * i);
+        let tmp = array[i - 1];
+        array[i - 1] = array[j];
+        array[j] = tmp;
+    }
+
+    return array;
+}

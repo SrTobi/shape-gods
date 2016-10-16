@@ -127,11 +127,22 @@ abstract class RoomType {
     abstract rightDoors(): Interval[];
 }
 
+interface Connection {
+    first: Sector,
+    second: Sector, 
+    gate: {
+        x: number,
+        y: number
+    }
+}
+
 class Sector {
     topNeighbours: Sector[] = [];
     bottomNeighbours: Sector[] = [];
     leftNeighbours: Sector[] = [];
     rightNeighbours: Sector[] = [];
+    connections: Connection[] = [];
+    visited = false;
 
     constructor(public horizontalBounds: Interval, public verticalBounds: Interval) {
 
@@ -255,6 +266,34 @@ class Sector {
     public isNeighbour(other: Sector): boolean {
         return this.neighbours().indexOf(other) >= 0;
     }
+
+    public connect(other: Sector) {
+        let connection: Connection = {
+            first: this,
+            second: other,
+            gate: {
+                x: 0,
+                y: 0
+            }
+        };
+
+        if(this.verticalBounds.intersects(other.verticalBounds)) {
+            // horizontal gate
+            let gateInterval = this.verticalBounds.intersect(other.verticalBounds);
+
+            connection.gate.x = Math.min(this.horizontalBounds.max(), other.horizontalBounds.max()) + 1;
+            connection.gate.y = gateInterval.rand();
+        } else {
+            // vertical gate
+            let gateInterval = this.horizontalBounds.intersect(other.horizontalBounds);
+
+            connection.gate.x = gateInterval.rand();
+            connection.gate.y = Math.min(this.verticalBounds.max(), other.verticalBounds.max()) + 1;
+        }
+
+        this.connections.push(connection);
+        other.connections.push(connection);
+    }
 }
 
 export class WorldGenerator {
@@ -358,23 +397,39 @@ export class WorldGenerator {
             }
         }
 
-        // add gates
-        for(let fro of sectors) {
+        // find route through sectors
+        type StackType = [Sector, Sector | undefined];
+        let sectorStack: [StackType] = [[Utils.randElement(sectors), undefined]];
+        
+        while(sectorStack.length > 0) {
+            let cur = sectorStack.pop();
 
-            // bottom
-            for(let to of fro.bottomNeighbours) {
-                let gateInterval = to.horizontalBounds.intersect(fro.horizontalBounds);
-                let x = gateInterval.rand();
-                let y = fro.verticalBounds.max() + 1;
+            if(cur && !cur[0].visited) {
+                let sector = cur[0];
+                sector.visited = true;
 
-                tiles[x][y].alpha = 0.5;
+                // create connecton
+                let origin = cur[1];
+                if(origin) {
+                    origin.connect(sector);
+                }
+                let neighbours = sector.neighbours();
+                Utils.shuffle(neighbours);
+
+                let nexts = neighbours.map((s):StackType => [s, sector]);
+
+                sectorStack.push(...nexts);
             }
-            
-            // right
-            for(let to of fro.rightNeighbours) {
-                let gateInterval = to.verticalBounds.intersect(fro.verticalBounds);
-                let x = fro.horizontalBounds.max() + 1;
-                let y = gateInterval.rand();
+        }
+
+
+
+        // add gates
+        for(let cur of sectors) {
+
+            for(let con of cur.connections) {
+                let x = con.gate.x;
+                let y = con.gate.y;
 
                 tiles[x][y].alpha = 0.5;
             }
