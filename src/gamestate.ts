@@ -8,6 +8,7 @@ import {Key, Keys} from './keyboard';
 
 const ScreenDimensionX = 10;
 const ScreenDimensionY = 10;
+const PlayerSpeed = 10;
 
 class Controls {
     up = new Key(Keys.Up);
@@ -84,8 +85,8 @@ export class GameState extends State {
         this.entities.forEach(entity => entity.update(dt));
 
         // update player
-        this.player.x += this.ctrl.verticalMovement() * 2 * dt;
-        this.player.y += this.ctrl.horizontalMovement() * 2 * dt;
+        this.player.x += this.ctrl.verticalMovement() * PlayerSpeed * dt;
+        this.player.y += this.ctrl.horizontalMovement() * PlayerSpeed * dt;
 
         // update view
         this.view.x = -this.player.x;
