@@ -49,7 +49,7 @@ export class GameState extends State {
     private view = new PIXI.Container();
     private screenWidth: number;
     private screenHeight: number;
-    private player: Entity;
+    private player: Creature;
     private ctrl = new Controls();
 
     constructor(private resources: Resources) {
@@ -72,7 +72,7 @@ export class GameState extends State {
 
 
 
-    addEntity(entity: Entity): Entity {
+    addEntity<T extends Entity>(entity: T): T {
         this.entities.push(entity);
         this.view.addChild(entity);
 
@@ -87,6 +87,13 @@ export class GameState extends State {
         // update player
         this.player.x += this.ctrl.verticalMovement() * PlayerSpeed * dt;
         this.player.y += this.ctrl.horizontalMovement() * PlayerSpeed * dt;
+
+        if(this.ctrl.verticalMovement() == 0 && this.ctrl.horizontalMovement() == 0) {
+            this.player.stand();
+        }else{
+            this.player.walk();
+        }
+
 
         // update view
         this.view.x = -this.player.x;
