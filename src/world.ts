@@ -132,7 +132,6 @@ class Sector {
     bottomNeighbours: Sector[] = [];
     leftNeighbours: Sector[] = [];
     rightNeighbours: Sector[] = [];
-    splited = false;
 
     constructor(public horizontalBounds: Interval, public verticalBounds: Interval) {
 
@@ -162,7 +161,7 @@ class Sector {
         if(!this.canSplit(minSectorWidth, minSectorHeight)) {
             return [this];
         }
-        this.splited = true;
+        
         if(this.canSplitHorizontally(minSectorWidth) && Math.random() > 0.5 || !this.canSplitVertically(minSectorHeight)) {
             return this.splitHorizontally(minSectorWidth);
         }else{
