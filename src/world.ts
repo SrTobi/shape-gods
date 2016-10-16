@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import * as Utils from './utils';
 import {Resources} from './resources';
 
 export abstract class Tile extends PIXI.Container {
@@ -96,16 +97,23 @@ class Interval {
         return this.max() - this.min() + 1; // max is inclusive!
     }
 
-    intersects(other: Interval) {
+    intersects(other: Interval): boolean {
         return Math.min(this.max(), other.max()) >= Math.max(this.min(), other.min());
     }
 
-    rand(): number {
-        return this.min() + Math.floor(this.size() * Math.random());
+    intersect(other: Interval): Interval {
+        if(!this.intersects(other)) {
+            throw "Intervals do not intersect!";
+        }
+        return new Interval(Math.max(this.min(), other.min()), Math.min(this.max(), other.max()));
     }
 
     hull(other: Interval): Interval {
         return new Interval(Math.min(this.min(), other.min()), Math.max(this.max(), other.max()));
+    }
+
+    rand(): number {
+        return this.min() + Math.floor(this.size() * Math.random());
     }
 }
 
@@ -123,7 +131,8 @@ class Sector {
     topNeighbours: Sector[] = [];
     bottomNeighbours: Sector[] = [];
     leftNeighbours: Sector[] = [];
-    rightNeigbours: Sector[] = [];
+    rightNeighbours: Sector[] = [];
+    splited = false;
 
     constructor(public horizontalBounds: Interval, public verticalBounds: Interval) {
 
@@ -153,7 +162,7 @@ class Sector {
         if(!this.canSplit(minSectorWidth, minSectorHeight)) {
             return [this];
         }
-
+        this.splited = true;
         if(this.canSplitHorizontally(minSectorWidth) && Math.random() > 0.5 || !this.canSplitVertically(minSectorHeight)) {
             return this.splitHorizontally(minSectorWidth);
         }else{
@@ -176,23 +185,27 @@ class Sector {
         let neighboursFrom = (ref: Sector, list: Sector[]) => list.filter(n => ref.horizontalBounds.intersects(n.horizontalBounds));
 
         // adjust neighbours
-        left.rightNeigbours = [right];
-        left.leftNeighbours = this.leftNeighbours;
+        left.rightNeighbours = [right];
+        left.leftNeighbours = this.leftNeighbours.slice(0);
         left.topNeighbours = neighboursFrom(left, this.topNeighbours);
-        left.bottomNeighbours = neighboursFrom(left, this.topNeighbours);
+        left.bottomNeighbours = neighboursFrom(left, this.bottomNeighbours);
 
         right.leftNeighbours = [left];
-        right.rightNeigbours = this.rightNeigbours;
+        right.rightNeighbours = this.rightNeighbours.slice(0);
         right.topNeighbours = neighboursFrom(right, this.topNeighbours);
-        right.bottomNeighbours = neighboursFrom(right, this.topNeighbours);
+        right.bottomNeighbours = neighboursFrom(right, this.bottomNeighbours);
+        
+
+        // update neighbours
+        this.leftNeighbours.forEach(n => n.updateNeighbours(this, [left], s => s.rightNeighbours, s => s.verticalBounds))
+        this.rightNeighbours.forEach(n => n.updateNeighbours(this, [right], s => s.leftNeighbours, s => s.verticalBounds))
+        this.topNeighbours.forEach(n => n.updateNeighbours(this, [left, right], s => s.bottomNeighbours, s => s.horizontalBounds))
+        this.bottomNeighbours.forEach(n => n.updateNeighbours(this, [left, right], s => s.topNeighbours, s => s.horizontalBounds))
 
         return [left, right];
     }
 
     public splitVertically(minSectorHeight: number): Sector[] {
-        if(!this.canSplitVertically(minSectorHeight)) {
-            console.log("cant split!!!!");
-        }
         let space = this.height() - 1; // 1 tile wall
         let sizeBounds = new Interval(minSectorHeight, space - minSectorHeight);
         let topSize = sizeBounds.rand();
@@ -208,20 +221,40 @@ class Sector {
 
         // adjust neighbours
         top.bottomNeighbours = [bottom];
-        top.topNeighbours = this.topNeighbours;
-        top.rightNeigbours = neighboursFrom(top, this.rightNeigbours);
+        top.topNeighbours = this.topNeighbours.slice(0);
+        top.rightNeighbours = neighboursFrom(top, this.rightNeighbours);
         top.leftNeighbours = neighboursFrom(top, this.leftNeighbours);
         
         bottom.topNeighbours = [top];
-        bottom.bottomNeighbours = this.bottomNeighbours;
-        bottom.rightNeigbours = neighboursFrom(bottom, this.rightNeigbours);
+        bottom.bottomNeighbours = this.bottomNeighbours.slice(0);
+        bottom.rightNeighbours = neighboursFrom(bottom, this.rightNeighbours);
         bottom.leftNeighbours = neighboursFrom(bottom, this.leftNeighbours);
+
+        // update neighbours
+        this.topNeighbours.forEach(n => n.updateNeighbours(this, [top], s => s.bottomNeighbours, s => s.horizontalBounds))
+        this.bottomNeighbours.forEach(n => n.updateNeighbours(this, [bottom], s => s.topNeighbours, s => s.horizontalBounds))
+        this.leftNeighbours.forEach(n => n.updateNeighbours(this, [top, bottom], s => s.rightNeighbours, s => s.verticalBounds))
+        this.rightNeighbours.forEach(n => n.updateNeighbours(this, [top, bottom], s => s.leftNeighbours, s => s.verticalBounds))
         
         return [top, bottom];
     }
 
-    neighbours(): Sector[] {
-        return this.topNeighbours.concat(this.bottomNeighbours, this.leftNeighbours, this.rightNeigbours);
+    private updateNeighbours(old: Sector, newSectors: Sector[], side: (s: Sector) => Sector[], bounds: (s: Sector) => Interval) {
+        let sideNeighbours = side(this);
+
+        let idx = sideNeighbours.indexOf(old);
+        let b = bounds(this);
+        let adjacentSectors = newSectors.filter(sec => b.intersects(bounds(sec)));
+
+        sideNeighbours.splice(idx, 1,...adjacentSectors);
+    }
+
+    public neighbours(): Sector[] {
+        return this.topNeighbours.concat(this.bottomNeighbours, this.leftNeighbours, this.rightNeighbours);
+    }
+
+    public isNeighbour(other: Sector): boolean {
+        return this.neighbours().indexOf(other) >= 0;
     }
 }
 
@@ -279,7 +312,7 @@ export class WorldGenerator {
 
         while(maxSplitTrys-- > 0) {
             // split a random sector 
-            let secIdx = Math.floor(Math.random() * sectors.length);
+            let secIdx = Utils.randIndex(sectors);
             let sector = sectors[secIdx];
 
             if(sector.canSplit(minSectorWidth, minSectorHeight)) {
@@ -301,6 +334,7 @@ export class WorldGenerator {
             return sprite;
         }
 
+        // make everything a wall
         for(let x = 0; x < this.width; ++x) {
             tiles[x] = [];
             for(let y = 0; y < this.height; ++y) {
@@ -312,6 +346,7 @@ export class WorldGenerator {
             }
         }
 
+        // remove sector bodys
         for(let sector of sectors) {
             for(let x = sector.horizontalBounds.min(); x <= sector.horizontalBounds.max(); ++x) {
                 for(let y = sector.verticalBounds.min(); y <= sector.verticalBounds.max(); ++y) {
@@ -323,6 +358,29 @@ export class WorldGenerator {
                 }
             }
         }
+
+        // add gates
+        for(let fro of sectors) {
+
+            // bottom
+            for(let to of fro.bottomNeighbours) {
+                let gateInterval = to.horizontalBounds.intersect(fro.horizontalBounds);
+                let x = gateInterval.rand();
+                let y = fro.verticalBounds.max() + 1;
+
+                tiles[x][y].alpha = 0.5;
+            }
+            
+            // right
+            for(let to of fro.rightNeighbours) {
+                let gateInterval = to.verticalBounds.intersect(fro.verticalBounds);
+                let x = fro.horizontalBounds.max() + 1;
+                let y = gateInterval.rand();
+
+                tiles[x][y].alpha = 0.5;
+            }
+        }
+
 
         return new World(this.width, this.height, tiles);
     }
